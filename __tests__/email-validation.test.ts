@@ -1,7 +1,6 @@
 import { validateEmail } from '../lib/utils';
 
 describe('Email Validation', () => {
-  // Valid email test cases
   const validEmails = [
     'user@example.com',
     'john.doe@company.co.uk',
@@ -10,7 +9,6 @@ describe('Email Validation', () => {
     'email123@domain-hyphen.com',
   ];
 
-  // Invalid email test cases
   const invalidEmails = [
     '',
     '   ',
@@ -23,18 +21,19 @@ describe('Email Validation', () => {
     'user@domain@.com',
   ];
 
-  // Test valid email cases
-  test.each(validEmails)('should validate valid email: %s', (email) => {
-    expect(validateEmail(email)).toBe(true);
+  test('validates correct email formats', () => {
+    validEmails.forEach(email => {
+      expect(validateEmail(email)).toBe(true);
+    });
   });
 
-  // Test invalid email cases
-  test.each(invalidEmails)('should invalidate invalid email: %s', (email) => {
-    expect(validateEmail(email)).toBe(false);
+  test('invalidates incorrect email formats', () => {
+    invalidEmails.forEach(email => {
+      expect(validateEmail(email)).toBe(false);
+    });
   });
 
-  // Additional edge case tests
-  test('should trim whitespace around email', () => {
+  test('handles whitespace around email', () => {
     expect(validateEmail('  user@example.com  ')).toBe(true);
   });
 });
