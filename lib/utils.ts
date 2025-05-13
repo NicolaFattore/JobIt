@@ -14,8 +14,8 @@ export function isValidEmail(email: string): boolean {
   // Handle null, undefined, or empty inputs
   if (!email) return false;
 
-  // Trim whitespace
-  const trimmedEmail = email.trim();
+  // Trim and normalize email
+  const trimmedEmail = email.trim().toLowerCase();
 
   // Check overall length constraints (RFC 5321)
   if (trimmedEmail.length < 3 || trimmedEmail.length > 254) return false;
@@ -26,7 +26,7 @@ export function isValidEmail(email: string): boolean {
   // Additional specific checks
   if (!emailRegex.test(trimmedEmail)) return false;
 
-  // Validate parts of the email
+  // Split email into local and domain parts
   const [local, domain] = trimmedEmail.split('@');
   
   // Check local part length (64 characters max)
@@ -35,5 +35,17 @@ export function isValidEmail(email: string): boolean {
   // Reject emails with consecutive dots
   if (/\.{2,}/.test(trimmedEmail)) return false;
 
+  // Ensure domain has at least one dot and valid characters
+  if (!domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) return false;
+
   return true;
+}
+
+/**
+ * Normalizes an email address
+ * @param email - Email address to normalize
+ * @returns normalized email
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
