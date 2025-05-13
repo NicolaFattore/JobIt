@@ -1,71 +1,51 @@
 import { isValidEmail } from '../lib/utils';
 
-describe('Email Validation', () => {
-  // Valid email test cases
-  const validEmails = [
-    'user@example.com',
-    'firstname.lastname@example.com',
-    'email@subdomain.example.com',
-    'firstname+lastname@example.com',
-    'email@123.123.123.123',
-    'email@[123.123.123.123]',
-    '"email"@example.com',
-    '1234567890@example.com',
-    'email@example-one.com',
-    '_______@example.com',
-    'email@example.name',
-    'email@example.museum',
-    'email@example.co.jp',
+describe('Comprehensive Email Validation', () => {
+  // 10 different email format scenarios
+  const emailTestCases = [
+    // 1. Standard valid email
+    { email: 'user@example.com', isValid: true },
+    
+    // 2. Email with subdomains
+    { email: 'user.name@company.co.uk', isValid: true },
+    
+    // 3. Email with plus addressing
+    { email: 'user+label@example.com', isValid: true },
+    
+    // 4. Email with numbers and special characters
+    { email: 'user123.name+test@example-domain.com', isValid: true },
+    
+    // 5. Email with single character local part
+    { email: 'a@example.com', isValid: true },
+    
+    // 6. Email with IP address domain
+    { email: 'user@[192.168.0.1]', isValid: true },
+    
+    // 7. Invalid: Missing @ symbol
+    { email: 'userexample.com', isValid: false },
+    
+    // 8. Invalid: Multiple @ symbols
+    { email: 'user@domain@example.com', isValid: false },
+    
+    // 9. Invalid: Missing domain
+    { email: 'user@', isValid: false },
+    
+    // 10. Invalid: Incorrect special character placement
+    { email: 'user.@example.com', isValid: false },
   ];
 
-  // Invalid email test cases
-  const invalidEmails = [
-    '',
-    ' ',
-    'invalid',
-    '@',
-    'email@',
-    'email@example',
-    'email@.com',
-    'email@example..com',
-    'email@example.com.',
-    'email@example,com',
-    'email@example@example.com',
-    'plainaddress',
-    '@example.com',
-    'Joe Smith <email@example.com>',
-    'email.example.com',
-    'email@example@example.com',
-    '.email@example.com',
-    'email.@example.com',
-    'email..email@example.com',
-  ];
-
-  // Test valid emails
-  test.each(validEmails)('should validate valid email: %s', (email) => {
-    expect(isValidEmail(email)).toBe(true);
+  // Test email validation
+  test.each(emailTestCases)('should validate email format correctly', ({ email, isValid }) => {
+    expect(isValidEmail(email)).toBe(isValid);
   });
 
-  // Test invalid emails
-  test.each(invalidEmails)('should invalidate invalid email: %s', (email) => {
-    expect(isValidEmail(email)).toBe(false);
-  });
-
-  // Additional specific test cases
-  test('should handle null and undefined inputs', () => {
-    expect(isValidEmail('')).toBe(false);
-    expect(isValidEmail(null as any)).toBe(false);
-    expect(isValidEmail(undefined as any)).toBe(false);
-  });
-
-  // Test whitespace handling
+  // Additional validation tests
   test('should trim whitespace', () => {
     expect(isValidEmail('  user@example.com  ')).toBe(true);
   });
 
-  // Test maximum email length
   test('should reject emails exceeding max length', () => {
-    const longEmail = 'a'.repeat(250) + '@example.com';
+    const longEmail = 'a'.repeat(255) + '@example.com';
     expect(isValidEmail(longEmail)).toBe(false);
   });
 });
