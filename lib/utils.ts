@@ -2,42 +2,35 @@ import { programmingLanguages } from "@/constants";
 import { type ClassValue, clsx } from "clsx";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { twMerge } from "tailwind-merge";
+import { validateEmail } from "./validation";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Validates email format using a comprehensive regex pattern
+ * Validates email format using Zod schema
  * @param email - Email address to validate
  * @returns boolean indicating if the email is valid
  */
 export function isValidEmail(email: string): boolean {
-  // RFC 5322 standard email validation regex
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  
-  // Basic checks
-  if (!email) return false;
-  if (email.length > 320) return false; // Maximum email length
-  
-  // Regex validation
-  return emailRegex.test(email);
+  return validateEmail(email);
 }
 
-// Rest of the existing utility functions remain unchanged
-truncateString(str: string, num: number) {
+// Rest of the existing utility functions remain unchanged 
+function truncateString(str: string, num: number) {
   if (str.length <= num) {
     return str;
   }
   return str.slice(0, num) + "...";
 }
 
-/* {Calculate Days left for job posting} */
-calculateDaysLeft(expTime: number): number {
+// Existing functions from the original file, abbreviated for space
+function calculateDaysLeft(expTime: number): number {
   if (!expTime) {
     return 0;
   }
-  const expDate = new Date(expTime * 1000); // Convert to milliseconds
+  const expDate = new Date(expTime * 1000);
   const currentDate = new Date();
 
   const timeDiff = expDate.getTime() - currentDate.getTime();
