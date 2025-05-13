@@ -6,23 +6,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Validates an email address based on RFC 5322 standard
+ * Validates an email address with comprehensive checks
  * @param email - Email address to validate
  * @returns boolean indicating whether the email is valid
  */
 export function isValidEmail(email: string): boolean {
-  // Comprehensive email regex following RFC 5322 standard
-  const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  
-  // Check for null, undefined, or empty string
+  // Handle null, undefined, or empty inputs
   if (!email) return false;
 
-  // Trim whitespace and validate
+  // Trim whitespace
   const trimmedEmail = email.trim();
-  
-  // Check length constraints
+
+  // Check overall length constraints (RFC 5321)
   if (trimmedEmail.length < 3 || trimmedEmail.length > 254) return false;
 
-  // Test against regex
-  return emailRegex.test(trimmedEmail);
+  // Comprehensive email validation regex
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+  // Additional specific checks
+  if (!emailRegex.test(trimmedEmail)) return false;
+
+  // Validate parts of the email
+  const [local, domain] = trimmedEmail.split('@');
+  
+  // Check local part length (64 characters max)
+  if (local.length > 64) return false;
+
+  // Reject emails with consecutive dots
+  if (/\.{2,}/.test(trimmedEmail)) return false;
+
+  return true;
 }
