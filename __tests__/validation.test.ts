@@ -1,12 +1,16 @@
-import { isValidEmail, getEmailValidationError } from '../lib/validation';
+import { 
+  validateAndNormalizeEmail, 
+  getEmailValidationError,
+  createCaseInsensitiveEmailQuery 
+} from '../lib/validation';
 
 describe('Email Validation', () => {
-  // Valid email test cases
-  const validEmails = [
-    'user@example.com',
-    'john.doe@company.co.uk',
-    'first+last@domain.com',
-    'email123@domain-name.com'
+  // Valid email test cases with expected normalization
+  const validEmailScenarios = [
+    { input: 'user@example.com', expected: 'user@example.com' },
+    { input: 'User@Example.com', expected: 'user@example.com' },
+    { input: '  John.Doe@Company.co.uk  ', expected: 'john.doe@company.co.uk' },
+    { input: 'first+last@domain.com', expected: 'first+last@domain.com' }
   ];
 
   // Invalid email test cases
@@ -23,24 +27,40 @@ describe('Email Validation', () => {
     undefined
   ];
 
-  // Test valid email cases
-  validEmails.forEach(email => {
-    test(`should validate valid email: ${email}`, () => {
-      expect(isValidEmail(email)).toBe(true);
-      expect(getEmailValidationError(email)).toBeNull();
+  // Test valid email normalization
+  validEmailScenarios.forEach(({ input, expected }) => {
+    test(`should normalize valid email: ${input}`, () => {
+      const normalized = validateAndNormalizeEmail(input);
+      expect(normalized).toBe(expected);
+      expect(getEmailValidationError(input)).toBeNull();
     });
   });
 
   // Test invalid email cases
   invalidEmails.forEach(email => {
     test(`should invalidate email: ${email}`, () => {
-      expect(isValidEmail(email as string)).toBe(false);
+      const normalized = validateAndNormalizeEmail(email as string);
+      expect(normalized).toBeNull();
       expect(getEmailValidationError(email as string)).not.toBeNull();
     });
   });
 
-  // Additional specific test cases
-  test('should handle whitespace', () => {
-    expect(isValidEmail('  user@example.com  ')).toBe(true);
+  // Test case-insensitive email query creation
+  describe('Case-insensitive email query', () => {
+    test('should create case-insensitive query for valid email', () => {
+      const email = 'Test@Example.com';
+      const query = createCaseInsensitiveEmailQuery(email);
+      
+      expect(query).toEqual({
+        email: /^test@example.com$/i
+      });
+    });
+
+    test('should return null for invalid email', () => {
+      const email = 'invalid-email';
+      const query = createCaseInsensitiveEmailQuery(email);
+      
+      expect(query).toBeNull();
+    });
   });
 });
