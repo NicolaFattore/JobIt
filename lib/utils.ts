@@ -1,43 +1,61 @@
-import { programmingLanguages } from "@/constants";
-import { type ClassValue, clsx } from "clsx";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { twMerge } from "tailwind-merge";
-import { validateEmail } from "./validation";
+import { validateEmail, normalizeEmail } from './validation';
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-/**
- * Validates email format using Zod schema
- * @param email - Email address to validate
- * @returns boolean indicating if the email is valid
- */
 export function isValidEmail(email: string): boolean {
   return validateEmail(email);
 }
 
-// Rest of the existing utility functions remain unchanged 
-function truncateString(str: string, num: number) {
-  if (str.length <= num) {
-    return str;
+/**
+ * Validate email with additional domain and format checks
+ * @param email - Email to validate
+ * @returns Validation result with detailed feedback
+ */
+export function validateEmailWithDetails(email: string): {
+  isValid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  // Basic checks
+  if (!email) {
+    errors.push('Email cannot be empty');
+    return { isValid: false, errors };
   }
-  return str.slice(0, num) + "...";
-}
 
-// Existing functions from the original file, abbreviated for space
-function calculateDaysLeft(expTime: number): number {
-  if (!expTime) {
-    return 0;
+  // Trim and normalize
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Length check
+  if (normalizedEmail.length < 5) {
+    errors.push('Email must be at least 5 characters');
   }
-  const expDate = new Date(expTime * 1000);
-  const currentDate = new Date();
 
-  const timeDiff = expDate.getTime() - currentDate.getTime();
-  const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  if (normalizedEmail.length > 320) {
+    errors.push('Email cannot exceed 320 characters');
+  }
 
-  return daysLeft;
-}
+  // Validate against RFC 5322 regex
+  if (!validateEmail(normalizedEmail)) {
+    errors.push('Invalid email format');
+  }
 
-// ... rest of the existing file contents remain the same
+  // Additional domain checks
+  const [, domain] = normalizedEmail.split('@');
+  if (domain) {
+    // Prevent common invalid domains
+    const invalidDomains = ['example.com', 'test.com'];
+    if (invalidDomains.includes(domain)) {
+      errors.push('Email domain is not allowed');
+    }
+
+    // Check for valid TLD
+    const validTLDs = ['.com', '.org', '.net', '.edu', '.gov'];
+    if (!validTLDs.some(tld => domain.endsWith(tld))) {
+      errors.push('Invalid top-level domain');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 }
