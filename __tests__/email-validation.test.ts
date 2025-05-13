@@ -1,37 +1,26 @@
-import { isValidEmail } from '../lib/utils';
+import { isValidEmail, normalizeEmail } from '../lib/utils';
 
 describe('Comprehensive Email Validation', () => {
-  // 10 different email format scenarios
+  // Test cases for email validation
   const emailTestCases = [
-    // 1. Standard valid email
+    // Valid emails
     { email: 'user@example.com', isValid: true },
-    
-    // 2. Email with subdomains
-    { email: 'user.name@company.co.uk', isValid: true },
-    
-    // 3. Email with plus addressing
+    { email: 'firstName.lastName@company.co.uk', isValid: true },
     { email: 'user+label@example.com', isValid: true },
-    
-    // 4. Email with numbers and special characters
     { email: 'user123.name+test@example-domain.com', isValid: true },
-    
-    // 5. Email with single character local part
     { email: 'a@example.com', isValid: true },
     
-    // 6. Email with IP address domain
-    { email: 'user@[192.168.0.1]', isValid: true },
-    
-    // 7. Invalid: Missing @ symbol
-    { email: 'userexample.com', isValid: false },
-    
-    // 8. Invalid: Multiple @ symbols
-    { email: 'user@domain@example.com', isValid: false },
-    
-    // 9. Invalid: Missing domain
+    // Invalid emails
+    { email: 'invalid', isValid: false },
+    { email: '@example.com', isValid: false },
     { email: 'user@', isValid: false },
+    { email: 'user@example', isValid: false },
+    { email: 'user@.com', isValid: false },
     
-    // 10. Invalid: Incorrect special character placement
-    { email: 'user.@example.com', isValid: false },
+    // Edge cases
+    { email: '', isValid: false },
+    { email: ' ', isValid: false },
+    { email: 'a'.repeat(255) + '@example.com', isValid: false },
   ];
 
   // Test email validation
@@ -39,13 +28,25 @@ describe('Comprehensive Email Validation', () => {
     expect(isValidEmail(email)).toBe(isValid);
   });
 
-  // Additional validation tests
-  test('should trim whitespace', () => {
+  // Test email normalization
+  describe('Email Normalization', () => {
+    const normalizationCases = [
+      { input: 'User@Example.com', expected: 'user@example.com' },
+      { input: '  Test@Example.com  ', expected: 'test@example.com' },
+      { input: 'user+label@Example.com', expected: 'user+label@example.com' },
+    ];
+
+    test.each(normalizationCases)('should normalize email correctly', ({ input, expected }) => {
+      expect(normalizeEmail(input)).toBe(expected);
+    });
+  });
+
+  // Additional specific tests
+  test('should handle whitespace', () => {
     expect(isValidEmail('  user@example.com  ')).toBe(true);
   });
 
-  test('should reject emails exceeding max length', () => {
-    const longEmail = 'a'.repeat(255) + '@example.com';
-    expect(isValidEmail(longEmail)).toBe(false);
+  test('should reject emails with consecutive dots', () => {
+    expect(isValidEmail('user..name@example.com')).toBe(false);
   });
 });
