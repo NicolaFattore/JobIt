@@ -1,16 +1,32 @@
 import { z } from 'zod';
 
 /**
+ * Normalize email for consistent comparison
+ * @param email - Email to normalize
+ * @returns normalized email
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
  * Email validation schema using Zod with RFC 5322 compliant regex
  * Comprehensive email validation with strict format checking
  */
 export const emailSchema = z.string()
   .trim() // Remove leading/trailing whitespace
-  .min(5, 'Email must be at least 5 characters')
-  .max(320, 'Email cannot exceed 320 characters')
-  .regex(
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-    'Invalid email format'
+  .transform(normalizeEmail) // Normalize email
+  .refine(
+    (email) => {
+      // Comprehensive email validation regex
+      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+      return emailRegex.test(email);
+    },
+    { message: 'Invalid email format' }
+  )
+  .refine(
+    (email) => email.length >= 5 && email.length <= 320,
+    { message: 'Email must be between 5 and 320 characters' }
   );
 
 /**
@@ -20,22 +36,11 @@ export const emailSchema = z.string()
  */
 export function validateEmail(email: string): boolean {
   try {
-    // Normalize email to lowercase for case-insensitive validation
-    const normalizedEmail = email.toLowerCase().trim();
-    
-    // Parse with Zod schema
+    // Normalize and validate email
+    const normalizedEmail = normalizeEmail(email);
     emailSchema.parse(normalizedEmail);
-    
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
-
-/**
- * Normalize email for consistent comparison
- * @param email - Email to normalize
- * @returns normalized email
- */
-export function normalizeEmail(email: string): string {
-  return email.toLowerCase().trim();
-}}
+}
