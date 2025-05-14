@@ -1,7 +1,7 @@
-import { isValidEmail, sanitizeEmail } from '../validation';
+import { isValidEmail, sanitizeEmail, normalizeEmail } from '../validation';
 
 describe('Email Validation', () => {
-  // Valid email test cases
+  // Comprehensive test cases covering various scenarios
   const validEmails = [
     'user@example.com',
     'firstname.lastname@example.com',
@@ -16,10 +16,13 @@ describe('Email Validation', () => {
     'email@example.name',
     'email@example.museum',
     'email@example.co.jp',
-    'UPPERCASE@example.com'
+    'UPPERCASE@example.com',
+    'very.common@example.com',
+    'disposable.style.email@example.com',
+    'other.email-with-hyphen@example.com',
+    'fully-qualified-domain@example.com'
   ];
 
-  // Invalid email test cases
   const invalidEmails = [
     'plainaddress',
     '@missingusername.com',
@@ -34,7 +37,13 @@ describe('Email Validation', () => {
     '',
     '   ',
     null,
-    undefined
+    undefined,
+    'email@111.222.333.44444', // Invalid IP
+    'email@[111.222.333.44444]', // Invalid IP in brackets
+    'email@domain..com', // Consecutive dots
+    'email@domian', // Missing TLD
+    'a@b.c', // Too short domain
+    'email@123.123.123.123.123' // Too many IP segments
   ];
 
   // Test valid email cases
@@ -67,6 +76,23 @@ describe('Email Validation', () => {
 
     test('Handles undefined input', () => {
       expect(sanitizeEmail(undefined)).toBe('');
+    });
+  });
+
+  // Email normalization tests
+  describe('Email Normalization', () => {
+    test('Normalizes different case emails', () => {
+      expect(normalizeEmail('Test@Example.COM')).toBe('test@example.com');
+      expect(normalizeEmail('test@example.com')).toBe('test@example.com');
+    });
+
+    test('Trims whitespace during normalization', () => {
+      expect(normalizeEmail('  test@example.com  ')).toBe('test@example.com');
+    });
+
+    test('Handles null and undefined', () => {
+      expect(normalizeEmail(null)).toBe('');
+      expect(normalizeEmail(undefined)).toBe('');
     });
   });
 });
