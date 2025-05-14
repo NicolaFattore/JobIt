@@ -4,7 +4,7 @@
  * @returns boolean indicating whether the email is valid
  */
 export function validateEmail(email: string): boolean {
-  // RFC 5322 compliant email regex with some additional restrictions
+  // RFC 5322 compliant email regex with additional restrictions
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
   
   // Check for null, undefined, or empty string
@@ -18,6 +18,15 @@ export function validateEmail(email: string): boolean {
 
   // Perform regex validation
   return emailRegex.test(trimmedEmail);
+}
+
+/**
+ * Normalize email for consistent comparison
+ * @param email - The email address to normalize
+ * @returns normalized email (lowercase, trimmed)
+ */
+export function normalizeEmail(email: string): string {
+  return email ? email.trim().toLowerCase() : '';
 }
 
 /**
