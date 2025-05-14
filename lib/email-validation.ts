@@ -1,60 +1,100 @@
 /**
- * Validates email format with comprehensive rules
- * @param email - Email address to validate
- * @returns boolean indicating if email is valid
+ * Comprehensive email validation utility
  */
-export function validateEmail(email: string): boolean {
-  // Check if email is empty or undefined
-  if (!email) return false;
+export class EmailValidator {
+  /**
+   * Advanced email validation regex
+   * Supports most standard email formats with additional constraints
+   */
+  private static EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-  // Trim whitespace and convert to lowercase
-  const trimmedEmail = email.trim().toLowerCase();
+  /**
+   * Validate email format
+   * @param email - Email address to validate
+   * @returns boolean indicating if email is valid
+   */
+  static validate(email: string): boolean {
+    // Check if email is empty or undefined
+    if (!email) return false;
 
-  // Regex for email validation
-  // Covers most standard email formats with some additional constraints
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    // Trim and convert to lowercase
+    const trimmedEmail = email.trim().toLowerCase();
 
-  // Additional validation checks
-  if (!emailRegex.test(trimmedEmail)) return false;
+    // Length checks
+    if (trimmedEmail.length < 5 || trimmedEmail.length > 320) return false;
 
-  // Length constraints
-  if (trimmedEmail.length < 5 || trimmedEmail.length > 100) return false;
+    // Regex validation
+    if (!this.EMAIL_REGEX.test(trimmedEmail)) return false;
 
-  // Split email into local and domain parts
-  const [localPart, domainPart] = trimmedEmail.split('@');
+    // Split email into local and domain parts
+    const [localPart, domainPart] = trimmedEmail.split('@');
 
-  // Additional checks for local and domain parts
-  if (localPart.length < 1 || localPart.length > 64) return false;
-  if (domainPart.length < 3 || domainPart.length > 255) return false;
+    // Additional checks for local and domain parts
+    if (localPart.length > 64 || domainPart.length > 255) return false;
 
-  // Check for consecutive dots
-  if (/\.{2,}/.test(trimmedEmail)) return false;
+    // Ensure valid top-level domain
+    const domainParts = domainPart.split('.');
+    if (domainParts.length < 2) return false;
+    const tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2 || tld.length > 63) return false;
 
-  // Ensure valid top-level domain (basic check)
-  const domainParts = domainPart.split('.');
-  if (domainParts.length < 2) return false;
-  const tld = domainParts[domainParts.length - 1];
-  if (tld.length < 2 || tld.length > 63) return false;
+    return true;
+  }
 
-  return true;
+  /**
+   * Generate descriptive error message for invalid emails
+   * @param email - Email address to validate
+   * @returns Error message or null if email is valid
+   */
+  static getValidationError(email: string): string | null {
+    if (!email) return 'Email cannot be empty';
+    
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (trimmedEmail.length < 5) return 'Email is too short';
+    if (trimmedEmail.length > 320) return 'Email is too long';
+
+    if (!this.validate(trimmedEmail)) {
+      return 'Please enter a valid email address';
+    }
+
+    return null;
+  }
+
+  /**
+   * Normalize email for case-insensitive comparison
+   * @param email - Email to normalize
+   * @returns Normalized email
+   */
+  static normalize(email: string): string {
+    return email.trim().toLowerCase();
+  }
 }
 
 /**
- * Generates a descriptive error message for invalid emails
- * @param email - Email address to validate
- * @returns Error message or null if email is valid
+ * Email uniqueness checker (mock implementation)
+ * In a real application, this would interact with the database
  */
-export function getEmailValidationError(email: string): string | null {
-  if (!email) return 'Email cannot be empty';
-  
-  const trimmedEmail = email.trim().toLowerCase();
+export class EmailUniquenessChecker {
+  // Simulated email storage (would be replaced by database check)
+  private static registeredEmails: Set<string> = new Set();
 
-  if (trimmedEmail.length < 5) return 'Email is too short';
-  if (trimmedEmail.length > 100) return 'Email is too long';
-
-  if (!validateEmail(trimmedEmail)) {
-    return 'Please enter a valid email address';
+  /**
+   * Check if email is unique
+   * @param email - Email to check
+   * @returns boolean indicating if email is unique
+   */
+  static async isUnique(email: string): Promise<boolean> {
+    const normalizedEmail = EmailValidator.normalize(email);
+    return !this.registeredEmails.has(normalizedEmail);
   }
 
-  return null;
+  /**
+   * Register an email (simulating database insertion)
+   * @param email - Email to register
+   */
+  static async registerEmail(email: string): Promise<void> {
+    const normalizedEmail = EmailValidator.normalize(email);
+    this.registeredEmails.add(normalizedEmail);
+  }
 }
