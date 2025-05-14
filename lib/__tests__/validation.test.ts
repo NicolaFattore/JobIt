@@ -16,6 +16,7 @@ describe('Email Validation', () => {
     'email@example.name',
     'email@example.museum',
     'email@example.co.jp',
+    'UPPERCASE@example.com'
   ];
 
   // Invalid email test cases
@@ -33,19 +34,19 @@ describe('Email Validation', () => {
     '',
     '   ',
     null,
-    undefined,
+    undefined
   ];
 
   // Test valid email cases
   validEmails.forEach(email => {
-    test(`Valid email: ${email}`, () => {
+    test(`Validates valid email: ${email}`, () => {
       expect(isValidEmail(email)).toBe(true);
     });
   });
 
   // Test invalid email cases
   invalidEmails.forEach(email => {
-    test(`Invalid email: ${email}`, () => {
+    test(`Identifies invalid email: ${email}`, () => {
       expect(isValidEmail(email as string)).toBe(false);
     });
   });
@@ -58,6 +59,14 @@ describe('Email Validation', () => {
 
     test('Converts to lowercase', () => {
       expect(sanitizeEmail('Test@Example.COM')).toBe('test@example.com');
+    });
+
+    test('Handles null input', () => {
+      expect(sanitizeEmail(null)).toBe('');
+    });
+
+    test('Handles undefined input', () => {
+      expect(sanitizeEmail(undefined)).toBe('');
     });
   });
 });
