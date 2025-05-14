@@ -1,9 +1,12 @@
 /**
- * Comprehensive email validation based on RFC 5322 standard
+ * Comprehensive email validation based on RFC 5322 and additional checks
  * @param email - The email address to validate
  * @returns boolean indicating whether the email is valid
  */
 export const isValidEmail = (email: string | null | undefined): boolean => {
+  // Comprehensive email validation regex
+  const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  
   // Check for null, undefined, or empty string
   if (!email) return false;
   
@@ -13,32 +16,31 @@ export const isValidEmail = (email: string | null | undefined): boolean => {
   // Length constraints
   if (trimmedEmail.length < 3 || trimmedEmail.length > 254) return false;
   
-  // RFC 5322 Official Standard email validation regex
-  // Comprehensive regex that covers most email format scenarios
-  const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  
-  // Validate using regex and additional checks
+  // Validate using regex
   if (!emailRegex.test(trimmedEmail)) return false;
   
-  // Additional domain validation
+  // Split email into local part and domain
   const [localPart, domain] = trimmedEmail.split('@');
   
-  // Ensure local part and domain are not empty
+  // Additional checks
   if (!localPart || !domain) return false;
   
-  // Validate local part length
+  // Local part length check (max 64 characters)
   if (localPart.length > 64) return false;
   
-  // Prevent consecutive dots in local part and domain
+  // Prevent consecutive dots
   if (/\.{2,}/.test(localPart) || /\.{2,}/.test(domain)) return false;
+  
+  // Domain length check
+  if (domain.length > 255) return false;
   
   return true;
 };
 
 /**
- * Sanitizes an email address by trimming whitespace and converting to lowercase
+ * Sanitizes an email address
  * @param email - The email address to sanitize
- * @returns sanitized email address or empty string if invalid
+ * @returns sanitized email address
  */
 export const sanitizeEmail = (email: string | null | undefined): string => {
   if (!email) return '';
@@ -46,9 +48,9 @@ export const sanitizeEmail = (email: string | null | undefined): string => {
 };
 
 /**
- * Generates a case-insensitive email identifier for unique constraint checks
+ * Normalizes email for unique constraint checks
  * @param email - The email address to normalize
- * @returns normalized email identifier
+ * @returns normalized email
  */
 export const normalizeEmail = (email: string | null | undefined): string => {
   if (!email) return '';
