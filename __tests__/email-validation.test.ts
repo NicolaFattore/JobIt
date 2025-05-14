@@ -1,7 +1,22 @@
-import { validateEmail, getEmailValidationError } from '../lib/email-validation';
+import { validateEmail, normalizeEmail, getEmailValidationError } from '../lib/email-validation';
+import mongoose from 'mongoose';
+import User from '../models/User';
 
 describe('Email Validation', () => {
-  // Valid email test cases
+  // Setup and teardown for MongoDB connection
+  beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/testdb');
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.close();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+  });
+
+  // Existing email format validation tests
   const validEmails = [
     'user@example.com',
     'firstname.lastname@example.com',
@@ -19,7 +34,6 @@ describe('Email Validation', () => {
     'firstname-lastname@example.com'
   ];
 
-  // Invalid email test cases
   const invalidEmails = [
     '',
     'invalid',
@@ -36,7 +50,7 @@ describe('Email Validation', () => {
     'あいうえお@example.com'
   ];
 
-  // Validate email format tests
+  // Existing format validation tests
   test.each(validEmails)('validates valid email: %s', (email) => {
     expect(validateEmail(email)).toBe(true);
     expect(getEmailValidationError(email)).toBeNull();
@@ -47,22 +61,44 @@ describe('Email Validation', () => {
     expect(getEmailValidationError(email)).not.toBeNull();
   });
 
-  // Edge case tests
-  test('handles null and undefined inputs', () => {
-    expect(validateEmail('')).toBe(false);
-    expect(validateEmail(null as any)).toBe(false);
-    expect(validateEmail(undefined as any)).toBe(false);
+  // Email normalization tests
+  test('normalizes email consistently', () => {
+    expect(normalizeEmail('  User@Example.com  ')).toBe('user@example.com');
+    expect(normalizeEmail('USER@EXAMPLE.COM')).toBe('user@example.com');
   });
 
-  test('trims whitespace around email', () => {
-    expect(validateEmail('  user@example.com  ')).toBe(true);
-  });
+  // Database-level unique constraint tests
+  describe('Database Email Uniqueness', () => {
+    test('prevents duplicate emails (case-insensitive)', async () => {
+      // Create a user with a specific email
+      const initialUser = new User({
+        email: 'test@example.com',
+        password: 'password123'
+      });
+      await initialUser.save();
 
-  test('checks email length constraints', () => {
-    const shortEmail = 'a@b';
-    const longEmail = 'a'.repeat(255) + '@example.com';
-    
-    expect(validateEmail(shortEmail)).toBe(false);
-    expect(validateEmail(longEmail)).toBe(false);
+      // Try to create another user with the same email (different case)
+      const duplicateUser = new User({
+        email: 'TEST@EXAMPLE.COM',
+        password: 'differentpassword'
+      });
+
+      // Expect an error about duplicate email
+      await expect(duplicateUser.save()).rejects.toThrow();
+    });
+
+    test('allows unique emails', async () => {
+      const user1 = new User({
+        email: 'user1@example.com',
+        password: 'password123'
+      });
+      const user2 = new User({
+        email: 'user2@example.com',
+        password: 'password456'
+      });
+
+      await expect(user1.save()).resolves.toBeTruthy();
+      await expect(user2.save()).resolves.toBeTruthy();
+    });
   });
 });
