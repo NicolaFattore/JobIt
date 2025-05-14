@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { validateEmail, normalizeEmail } from '../lib/email-validation';
+import { EmailValidator } from '../lib/email-validation';
 
 // Define the User schema interface
 export interface IUser extends mongoose.Document {
@@ -15,10 +15,10 @@ const UserSchema = new mongoose.Schema<IUser>({
     required: [true, 'Email is required'],
     unique: true, // Database-level unique constraint
     trim: true,
-    lowercase: true, // Ensure lowercase storage
+    lowercase: true,
     validate: {
       validator: function(value: string) {
-        return validateEmail(value);
+        return EmailValidator.validate(value);
       },
       message: 'Invalid email format'
     }
@@ -28,9 +28,8 @@ const UserSchema = new mongoose.Schema<IUser>({
     required: [true, 'Password is required'],
     // Add password complexity validation if needed
   }
-  // Add other user schema fields
 }, {
-  timestamps: true, // Add createdAt and updatedAt fields
+  timestamps: true,
   // Ensure case-insensitive unique index
   indexes: [{ 
     email: 1 
@@ -40,14 +39,14 @@ const UserSchema = new mongoose.Schema<IUser>({
 // Pre-save hook to normalize email
 UserSchema.pre('save', function(next) {
   if (this.isModified('email')) {
-    this.email = normalizeEmail(this.email);
+    this.email = EmailValidator.normalize(this.email);
   }
   next();
 });
 
 // Custom method to find user by email (case-insensitive)
 UserSchema.statics.findByEmail = function(email: string) {
-  return this.findOne({ email: normalizeEmail(email) });
+  return this.findOne({ email: EmailValidator.normalize(email) });
 };
 
 // Create the User model
