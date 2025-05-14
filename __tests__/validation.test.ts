@@ -1,16 +1,20 @@
 import { isValidEmail, getEmailValidationError } from '../lib/validation';
 
 describe('Email Validation', () => {
-  // Valid email test cases
+  // Comprehensive test cases covering various scenarios
   const validEmails = [
     'user@example.com',
     'firstname.lastname@example.com',
     'user+tag@example.com',
     'user123@example.co.uk',
     'user@subdomain.example.com',
+    'very.common@example.com',
+    'disposable.style.email.with+symbol@example.com',
+    'other.email-with-hyphen@example.com',
+    'fully-qualified-domain@example.com',
+    'user.name+tag@example.org',
   ];
 
-  // Invalid email test cases
   const invalidEmails = [
     '',
     '   ',
@@ -21,6 +25,14 @@ describe('Email Validation', () => {
     'user@.com',
     'user@example.',
     'user@example..com',
+    'a@b.c',  // Too short
+    'a' .repeat(65) + '@example.com', // Local part too long
+    'user@' + 'a'.repeat(254) + '.com', // Domain too long
+    'user name@example.com', // Space in local part
+    'user@domain', // Missing TLD
+    '.user@example.com', // Starts with dot
+    'user.@example.com', // Ends with dot
+    'user..name@example.com', // Consecutive dots
   ];
 
   // Test valid email scenarios
