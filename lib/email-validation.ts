@@ -1,46 +1,65 @@
 /**
- * Validates email format using a comprehensive regex pattern
- * @param email - The email address to validate
- * @returns boolean indicating whether the email is valid
+ * Comprehensive email validation utility
  */
-export function validateEmail(email: string): boolean {
-  // RFC 5322 compliant email regex with additional restrictions
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-  
-  // Check for null, undefined, or empty string
-  if (!email) return false;
+export class EmailValidator {
+  /**
+   * Validate email format with comprehensive checks
+   * @param email - Email address to validate
+   * @returns boolean indicating email validity
+   */
+  static validate(email: string): boolean {
+    // Check for null, undefined, or empty input
+    if (!email) return false;
 
-  // Trim whitespace and convert to lowercase for consistent validation
-  const trimmedEmail = email.trim().toLowerCase();
+    // Trim and convert to lowercase
+    const trimmedEmail = email.trim().toLowerCase();
 
-  // Check email length constraints
-  if (trimmedEmail.length < 3 || trimmedEmail.length > 254) return false;
+    // Length check (RFC 5321 limits)
+    if (trimmedEmail.length < 3 || trimmedEmail.length > 254) return false;
 
-  // Perform regex validation
-  return emailRegex.test(trimmedEmail);
-}
+    // Comprehensive email regex with RFC 5322 standard
+    const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-/**
- * Normalize email for consistent comparison
- * @param email - The email address to normalize
- * @returns normalized email (lowercase, trimmed)
- */
-export function normalizeEmail(email: string): string {
-  return email ? email.trim().toLowerCase() : '';
-}
+    // Additional validation checks
+    if (!emailRegex.test(trimmedEmail)) return false;
 
-/**
- * Get a descriptive error message for invalid email
- * @param email - The email address to validate
- * @returns string with error message or null if email is valid
- */
-export function getEmailValidationError(email: string): string | null {
-  if (!email) return 'Email is required';
-  
-  const trimmedEmail = email.trim().toLowerCase();
+    // Local part length check
+    const [local, domain] = trimmedEmail.split('@');
+    if (local.length > 64 || domain.length > 255) return false;
 
-  if (trimmedEmail.length < 3) return 'Email is too short';
-  if (trimmedEmail.length > 254) return 'Email is too long';
-  
-  return validateEmail(trimmedEmail) ? null : 'Invalid email format';
+    // Disallow consecutive dots
+    if (/\.{2,}/.test(trimmedEmail)) return false;
+
+    // Disallow leading/trailing dots in local part
+    if (/^\.|\.@|\.$/.test(local)) return false;
+
+    return true;
+  }
+
+  /**
+   * Normalize email for consistent comparison
+   * @param email - Email to normalize
+   * @returns Normalized email
+   */
+  static normalize(email: string): string {
+    return email ? email.trim().toLowerCase() : '';
+  }
+
+  /**
+   * Get detailed validation error message
+   * @param email - Email to validate
+   * @returns Error message or null if valid
+   */
+  static getValidationError(email: string): string | null {
+    if (!email) return 'Email is required';
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (trimmedEmail.length < 3) return 'Email is too short';
+    if (trimmedEmail.length > 254) return 'Email is too long';
+
+    if (!this.validate(trimmedEmail)) return 'Invalid email format';
+
+    return null;
+  }
 }
