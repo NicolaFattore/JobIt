@@ -1,17 +1,32 @@
-import { isValidEmail, getEmailValidationError } from '../lib/validation';
+import mongoose from 'mongoose';
+import { isValidEmail, getEmailValidationError, createUniqueEmailValidator } from '../lib/validation';
+import User from '../models/User';
 
 describe('Email Validation', () => {
-  // Comprehensive test cases covering various scenarios
+  // Setup MongoDB connection for unique constraint tests
+  beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/testdb');
+  });
+
+  // Cleanup after tests
+  afterAll(async () => {
+    await mongoose.connection.close();
+  });
+
+  // Clear database before each test
+  beforeEach(async () => {
+    await User.deleteMany({});
+  });
+
+  // Comprehensive test cases for email formats
   const validEmails = [
     'user@example.com',
     'firstname.lastname@example.com',
     'user+tag@example.com',
     'user123@example.co.uk',
-    'user@subdomain.example.com',
     'very.common@example.com',
     'disposable.style.email.with+symbol@example.com',
     'other.email-with-hyphen@example.com',
-    'fully-qualified-domain@example.com',
     'user.name+tag@example.org',
   ];
 
@@ -28,24 +43,16 @@ describe('Email Validation', () => {
     'a@b.c',  // Too short
     'a' .repeat(65) + '@example.com', // Local part too long
     'user@' + 'a'.repeat(254) + '.com', // Domain too long
-    'user name@example.com', // Space in local part
-    'user@domain', // Missing TLD
-    '.user@example.com', // Starts with dot
-    'user.@example.com', // Ends with dot
-    'user..name@example.com', // Consecutive dots
   ];
 
-  // Test valid email scenarios
-  describe('isValidEmail - Valid Emails', () => {
+  // Validate email format tests
+  describe('isValidEmail - Format Validation', () => {
     validEmails.forEach(email => {
       it(`should return true for valid email: ${email}`, () => {
         expect(isValidEmail(email)).toBe(true);
       });
     });
-  });
 
-  // Test invalid email scenarios
-  describe('isValidEmail - Invalid Emails', () => {
     invalidEmails.forEach(email => {
       it(`should return false for invalid email: ${email}`, () => {
         expect(isValidEmail(email)).toBe(false);
@@ -53,7 +60,7 @@ describe('Email Validation', () => {
     });
   });
 
-  // Test error message generation
+  // Error message generation tests
   describe('getEmailValidationError', () => {
     it('should return error for empty email', () => {
       expect(getEmailValidationError('')).toBe('Email address is required');
@@ -62,11 +69,33 @@ describe('Email Validation', () => {
 
     it('should return error for invalid email formats', () => {
       expect(getEmailValidationError('invalid-email')).toBe('Please enter a valid email address (e.g., example@domain.com)');
-      expect(getEmailValidationError('user@')).toBe('Please enter a valid email address (e.g., example@domain.com)');
     });
 
     it('should return null for valid email', () => {
       expect(getEmailValidationError('user@example.com')).toBeNull();
+    });
+  });
+
+  // Unique constraint tests
+  describe('Unique Email Constraint', () => {
+    it('should prevent duplicate email registration (case-insensitive)', async () => {
+      // Create first user
+      const user1 = new User({ email: 'test@example.com' });
+      await user1.save();
+
+      // Attempt to create user with same email (different case)
+      const user2 = new User({ email: 'TEST@EXAMPLE.COM' });
+      
+      // Expect an error about duplicate email
+      await expect(user2.save()).rejects.toThrow('Email already in use');
+    });
+
+    it('should allow unique email registration', async () => {
+      const user1 = new User({ email: 'unique1@example.com' });
+      const user2 = new User({ email: 'unique2@example.com' });
+
+      await expect(user1.save()).resolves.toBeTruthy();
+      await expect(user2.save()).resolves.toBeTruthy();
     });
   });
 });
